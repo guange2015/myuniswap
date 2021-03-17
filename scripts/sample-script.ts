@@ -62,8 +62,6 @@ async function main(){
     '0');
 
   console.log("deposit success: ", tx.hash);
-
-
 }
 
 
