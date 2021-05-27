@@ -4,6 +4,8 @@ import '../interfaces/IUniswapV2Pair.sol';
 
 import "./SafeMath.sol";
 
+import "hardhat/console.sol";
+
 library UniswapV2Library {
     using SafeMath for uint;
 
@@ -21,7 +23,8 @@ library UniswapV2Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f' // init code hash
+                hex'26df42047fa285bf028c6e5e37978b2a2fbaea4470d59f72ddfbabb298818cee' //这里自己部署的话，要重新计算一下，参照factory中的createPair
+                // hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f' // init code hash
             ))));
     }
 
@@ -29,8 +32,13 @@ library UniswapV2Library {
     function getReserves(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB) {
         (address token0,) = sortTokens(tokenA, tokenB);
 
+        console.log("factory is %s, tokenA is %s, tokenB is %s", factory, tokenA, tokenB);
+
+        address pairAddress = pairFor(factory, tokenA, tokenB);
+
+        console.log("IUniswapV2Pair %s", pairAddress);
         //因为这里面的储备量是排序后的
-        (uint reserve0, uint reserve1,) = IUniswapV2Pair(pairFor(factory, tokenA, tokenB)).getReserves();
+        (uint reserve0, uint reserve1,) = IUniswapV2Pair(pairAddress).getReserves();
 
         //所以这里也得根据排序后来取
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);

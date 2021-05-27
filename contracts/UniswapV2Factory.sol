@@ -3,6 +3,8 @@ pragma solidity =0.5.16;
 import './interfaces/IUniswapV2Factory.sol';
 import './UniswapV2Pair.sol';
 
+import "hardhat/console.sol";
+
 contract UniswapV2Factory is IUniswapV2Factory {
     address public feeTo;
     address public feeToSetter;
@@ -20,6 +22,26 @@ contract UniswapV2Factory is IUniswapV2Factory {
         return allPairs.length;
     }
 
+
+    function itob(uint8 b) private pure returns(byte){
+        if(b<10){
+            return byte(48 + b);
+        } else {
+            return byte(97 + b - 10);
+        }
+    }
+
+    function bytes32ToHexStr(bytes32 _bytes32) public pure returns (  string memory) {
+        bytes memory bytesArray = new bytes(64);
+        for (uint256 i; i < 32; i++) {
+            bytesArray[2*i] = itob(uint8(_bytes32[i]) / 16);
+            bytesArray[2*i+1]= itob(uint8(_bytes32[i]) % 16);
+        }
+        return string(bytesArray);
+    }
+
+    
+
     function createPair(address tokenA, address tokenB) external returns (address pair) {
         require(tokenA != tokenB, 'UniswapV2: IDENTICAL_ADDRESSES');
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
@@ -27,6 +49,11 @@ contract UniswapV2Factory is IUniswapV2Factory {
         require(getPair[token0][token1] == address(0), 'UniswapV2: PAIR_EXISTS'); // single check is sufficient
         bytes memory bytecode = type(UniswapV2Pair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+
+
+        bytes32 codesalt = keccak256(bytecode);
+        console.log("code slat is %s", bytes32ToHexStr(codesalt));
+
         assembly {
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }

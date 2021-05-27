@@ -124,7 +124,7 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
         uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         if (_totalSupply == 0) { //为0，就是刚创建的配对合约
 
-            //初始流动性 = a*b/1000
+            //初始流动性 = a*b 开方 -1000
             liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
 
             //弄一个最小流动性，白皮书有讲为什么要这么做

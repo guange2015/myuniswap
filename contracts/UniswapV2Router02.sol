@@ -9,6 +9,8 @@ import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
 
+import "hardhat/console.sol";
+
 contract UniswapV2Router02 is IUniswapV2Router02 {
     using SafeMath for uint;
 
@@ -40,8 +42,11 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
     ) internal virtual returns (uint amountA, uint amountB) {
         // create the pair if it doesn't exist yet
         //没有配对就先创建配对合约
+        console.log("check pair");
         if (IUniswapV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {
-            IUniswapV2Factory(factory).createPair(tokenA, tokenB);
+            console.log("start create pair");
+            address pairAddress = IUniswapV2Factory(factory).createPair(tokenA, tokenB);
+            console.log("create pairs %s", pairAddress);
         }
 
         //取出tokenA和tokenB在配对合约中的供应量
@@ -81,6 +86,8 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
 
         //获取最佳流动性值
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
+
+        console.log("_addLiquidity is %s, %s", amountA, amountB);
 
         //往配对合约转账tokenA和tokenB
         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
