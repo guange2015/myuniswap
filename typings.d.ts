@@ -4,3 +4,6 @@ declare module "*.json" {
 }
 
 declare var a : number, b: number;
+
+
+

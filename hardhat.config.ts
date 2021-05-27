@@ -27,22 +27,41 @@ dotenv.config();
 const mnemonic = process.env.MNEMONIC;
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "kovan",
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {
+      forking: {
+        // url: 'https://mainnet.infura.io/v3/0513b51a04a54bb7a68b4d330777d74a'
+        url: "https://eth-kovan.alchemyapi.io/v2/_-ujxbv-FqFBsTabUAIF6HKRuD3nqvwu",
+        blockNumber: 24459306,
+      },
+      accounts: {
+        mnemonic: mnemonic
+      },
+
+        gas: 20e9,
+        blockGasLimit: 0x1fffffffffffff,
+        allowUnlimitedContractSize: true,
     },
     kovan: {
       url: "https://eth-kovan.alchemyapi.io/v2/_-ujxbv-FqFBsTabUAIF6HKRuD3nqvwu",
+      // url: "https://kovan.infura.io/v3/0513b51a04a54bb7a68b4d330777d74a",
       // accounts: ['49c794db293f4a6e8422107495b0610017b6f1b2972fa975d9331d39c507d453']
       accounts: {
         mnemonic: mnemonic
       },
       timeout: 600000,
+
+      gas: 20e10,
+      blockGasLimit: 0x1fffffffffffff,
     },
   },
   solidity: {
     compilers: [
       {version: '0.7.3'},
+      {version: '0.6.6'},
+      {version: '0.5.8'},
+      {version: '0.5.16'},
       {version: '0.6.12'}
     ]
   },
