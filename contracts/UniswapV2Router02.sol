@@ -96,6 +96,8 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
 
         //挖矿
         liquidity = IUniswapV2Pair(pair).mint(to);
+
+        console.log("liquidity is %s", liquidity);  
     }
     function addLiquidityETH(
         address token,

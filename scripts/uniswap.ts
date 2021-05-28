@@ -1,4 +1,29 @@
+import { Signer } from "@ethersproject/abstract-signer";
+import { Contract } from "@ethersproject/contracts";
 import {ethers, network} from "hardhat";
+
+
+
+function getTokenContract(address:string, account: Signer):Contract {
+    const _tokenA = ethers.ContractFactory.getContract(address,
+        ['function approve(address spender, uint value) external returns (bool)',
+         'function balanceOf(address account) public view returns (uint256)',
+        'function allowance(address owner, address spender) public view returns (uint256)'],
+        account);
+    return _tokenA;
+}
+
+function getRouterContract(address:string, account:Signer):Contract {
+    const _tokenA = ethers.ContractFactory.getContract(address, 
+        [
+            'function swapExactTokensForTokens(uint amountIn,uint amountOutMin,address[] calldata path,address to,uint deadline) external returns (uint[] memory amounts)',
+            'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
+            'function addLiquidity(address tokenA,address tokenB,uint amountADesired,uint amountBDesired,uint amountAMin,uint amountBMin,address to,uint deadline) external returns (uint amountA, uint amountB, uint liquidity)' 
+        ],
+        account);
+
+    return _tokenA;
+}
 
 async function deploy():Promise<string> {
     let Factory = await ethers.getContractFactory("UniswapV2Factory");
@@ -50,41 +75,68 @@ async function deployTokens():Promise<[string, string]>{
 }
 
 //兑换
-async function swap() {
+async function swap(routerAddress:string,
+    tokenA:string,tokenB:string) {
+    let [account] = await ethers.getSigners();
+
+    const router = getRouterContract(routerAddress,account);
+
+    let amountIn = 10;
+    const path = [tokenA, tokenB];
+    const to = account.address;
+    const deadline = Math.floor(Date.now()/1000)+60*20; //20分钟
+
+
+    //查一下通过TokenA能兑换多少tokenB
+    //B*a*997/(1000*A+997*a)
+    const amounts = await router.getAmountsOut(amountIn, path);
+    console.log(`amounts is ${JSON.stringify(amounts)}`);
+
+
+    //查一下余额
+    const _tokenA = getTokenContract(tokenA,account);
+    const _tokenB = getTokenContract(tokenB,account);
+
+    let balanceA = await _tokenA.balanceOf(account.address);
+    let balanceB = await _tokenB.balanceOf(account.address);
+    console.log(`balanceA is ${balanceA}, balanceB is ${balanceB}`)
+
+
+    //授权
+    await _tokenA.approve(router.address, amountIn);
+
+    //兑换
+    const tx = await router.swapExactTokensForTokens(
+        amountIn,
+        0,
+        path,
+        to,
+        deadline
+    );
+
+    console.log(`Transaction hash: ${tx.hash}`);
+
+    //再查一下tokenAB余额
+    balanceA = await _tokenA.balanceOf(account.address);
+    balanceB = await _tokenB.balanceOf(account.address);
+    console.log(`balanceA is ${balanceA}, balanceB is ${balanceB}`)
+    
 }
 
 //添加流动性
-async function addLiquidity(factory: string, 
+async function addLiquidity(routerAddress: string, 
     tokenA:string, 
     tokenB:string,
     amountA:number,
     amountB:number) {
-    // factory address is 0xFaCCD1c77C82C779D336cb647CC2e41b73e28368
-    // weth address is 0x4A98677E30a407f5C2c646781968b09B13ae6D18
-    // router address is 0xd530696362f679B9C6c677294Afde0152c2991d0
-
-    // tokenA address is 0x04BA98928cDe3e7A34aC3C727299607B0FE863Bb
-    // tokenB address is 0x7478564e46bC2fBf497efCC4A08ea2f2E9f70377
 
     let [account] = await ethers.getSigners();
 
-    
-    const router = await ethers.ContractFactory.getContract(factory,
-    [
-        'function addLiquidity(address tokenA,address tokenB,uint amountADesired,uint amountBDesired,uint amountAMin,uint amountBMin,address to,uint deadline) external returns (uint amountA, uint amountB, uint liquidity)'
-    ],account);
+    const router = getRouterContract(routerAddress,account)
 
 
-    const _tokenA = ethers.ContractFactory.getContract(tokenA,
-        ['function approve(address spender, uint value) external returns (bool)',
-         'function balanceOf(address account) public view returns (uint256)',
-        'function allowance(address owner, address spender) public view returns (uint256)'],
-        account);
-    const _tokenB = ethers.ContractFactory.getContract(tokenB,
-            ['function approve(address spender, uint value) external returns (bool)',
-            'function balanceOf(address account) public view returns (uint256)',
-            'function allowance(address owner, address spender) public view returns (uint256)'],
-            account);
+    const _tokenA = getTokenContract(tokenA,account);
+    const _tokenB = getTokenContract(tokenB,account);
 
     //授权
     let tx = await _tokenA.approve(router.address, amountA);
@@ -119,6 +171,7 @@ async function addLiquidity(factory: string,
 
     
     //兑换
+    await swap(factory, tokenA, tokenB);
 
 
 })()
