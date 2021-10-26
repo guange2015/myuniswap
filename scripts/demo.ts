@@ -4,18 +4,28 @@ import {ethers} from "hardhat"
 
 
 async function main() {
-    let Greeter = await ethers.getContractFactory("Greeter");
-    let greeter = await Greeter.deploy("guange");
+    //1. 部署工厂合约
+    const [owner] = await ethers.getSigners();
 
-    await greeter.deployed();
+    console.log(`owner is ${owner.address}`);
 
-    let s = await greeter.test_bytes();
-
-    console.log(s);
-
-    console.log(ethers.utils.parseBytes32String(s));
+    const UniswapV2Factory = await ethers.getContractFactory("UniswapV2Factory");
+    let factory = await UniswapV2Factory.deploy(owner.address)
 
 
+    await factory.deployed()
+
+    console.log(`factory address is ${factory.address}`);
+
+
+    const wethAddress = owner.address;
+    const UniswapV2Router02 = await ethers.getContractFactory("UniswapV2Router02");
+    let router = await UniswapV2Router02.deploy(factory.address, wethAddress)
+
+
+    await router.deployed()
+
+    console.log(`router address is ${router.address}`);
 }
 
 
